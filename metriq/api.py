@@ -1,11 +1,12 @@
-from fastapi import UploadFile, File, Request
+from fastapi import FastAPI, UploadFile, File, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from datetime import date
 
+from datetime import date
 from metriq.importer_registry import detect_importer
 from metriq.database import Session
 from metriq.models import NutritionLog
+
 app = FastAPI()
 
 templates = Jinja2Templates(directory="metriq/templates")
