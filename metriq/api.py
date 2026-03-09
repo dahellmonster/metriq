@@ -25,15 +25,20 @@ async def upload_file(file: UploadFile = File(...)):
 
     path = f"/tmp/{file.filename}"
 
-    with open(path, "wb") as f:
-        f.write(await file.read())
+    data = await file.read()
 
-    importer = detect_importer(path)
-    data = importer.parse(path)
+    with open(path, "wb") as f:
+        f.write(data)
+
+    text_sample = data[:10000].decode(errors="ignore")
+
+    importer = detect_importer(text_sample)
+
+    parsed = importer.parse(path)
 
     session = Session()
 
-    for day, values in data.items():
+    for day, values in parsed.items():
 
         entry = NutritionLog(
             date=day,
@@ -48,4 +53,4 @@ async def upload_file(file: UploadFile = File(...)):
 
     session.commit()
 
-    return {"status": "imported", "days": len(data)}
+    return {"status": "imported", "days": len(parsed)}
