@@ -6,3 +6,4 @@ apscheduler
 pyyaml
 MyFitnessPal
 jinja2
+python-multipart

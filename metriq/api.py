@@ -11,6 +11,9 @@ app = FastAPI()
 
 templates = Jinja2Templates(directory="metriq/templates")
 
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
 
 @app.get("/upload", response_class=HTMLResponse)
 async def upload_page(request: Request):
