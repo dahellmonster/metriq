@@ -12,6 +12,9 @@ class AppleHealthImporter:
 
         session = Session()
 
+        BATCH_SIZE = 5000
+        batch = []
+
         wanted_metrics = {
             "HKQuantityTypeIdentifierDietaryEnergyConsumed": "calories",
             "HKQuantityTypeIdentifierDietaryProtein": "protein",
@@ -29,6 +32,8 @@ class AppleHealthImporter:
             "steps": 0,
             "weight": None
         })
+
+        count = 0
 
         for event, elem in ET.iterparse(file_path, events=("end",)):
 
@@ -53,7 +58,6 @@ class AppleHealthImporter:
             except:
                 end_date = None
 
-            # store raw record
             record = HealthRecord(
                 type=type_name,
                 value=value_raw,
@@ -61,9 +65,14 @@ class AppleHealthImporter:
                 end_date=end_date
             )
 
-            session.add(record)
+            batch.append(record)
+            count += 1
 
-            # process numeric metrics
+            if len(batch) >= BATCH_SIZE:
+                session.bulk_save_objects(batch)
+                session.commit()
+                batch.clear()
+
             if type_name in wanted_metrics:
 
                 try:
@@ -73,7 +82,6 @@ class AppleHealthImporter:
                     continue
 
                 date = start_date.date()
-
                 metric = wanted_metrics[type_name]
 
                 if metric == "weight":
@@ -83,6 +91,10 @@ class AppleHealthImporter:
 
             elem.clear()
 
-        session.commit()
+        if batch:
+            session.bulk_save_objects(batch)
+            session.commit()
+
+        print(f"Imported {count} raw health records")
 
         return daily
