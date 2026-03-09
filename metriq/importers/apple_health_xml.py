@@ -26,7 +26,13 @@ class AppleHealthImporter(BaseImporter):
                 continue
 
             type_name = elem.attrib.get("type")
-            value = float(elem.attrib.get("value", 0))
+            value_raw = elem.attrib.get("value")
+
+            try:
+                value = float(value_raw)
+            except (TypeError, ValueError):
+                elem.clear()
+                continue
             date = elem.attrib.get("startDate")
 
             date = datetime.fromisoformat(date).date()
