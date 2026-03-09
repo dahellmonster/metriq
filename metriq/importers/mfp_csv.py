@@ -3,12 +3,12 @@ from .base import BaseImporter
 
 class MfpCsvImporter(BaseImporter):
 
-    def parse(self, text):
+    def detect(self, data: str) -> bool:
+        return "Calories" in data and "Protein" in data
 
-        if isinstance(text, str):
-            text = text.splitlines()
+    def parse(self, data: str):
 
-        reader = csv.DictReader(text)
+        reader = csv.DictReader(data.splitlines())
 
         calories = 0
         protein = 0
@@ -16,10 +16,10 @@ class MfpCsvImporter(BaseImporter):
         fat = 0
 
         for row in reader:
-            calories += float(row.get("Calories", 0) or 0)
-            protein += float(row.get("Protein", 0) or 0)
-            carbs += float(row.get("Carbohydrates", 0) or 0)
-            fat += float(row.get("Fat", 0) or 0)
+            calories += float(row.get("Calories",0) or 0)
+            protein += float(row.get("Protein",0) or 0)
+            carbs += float(row.get("Carbohydrates",0) or 0)
+            fat += float(row.get("Fat",0) or 0)
 
         return {
             "calories": calories,

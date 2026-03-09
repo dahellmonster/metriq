@@ -1,3 +1,7 @@
 class BaseImporter:
-    def parse(self, data):
-        raise NotImplementedError("Importer must implement parse()")
+    def detect(self, data: str) -> bool:
+        """Return True if this importer can parse the data"""
+        raise NotImplementedError
+
+    def parse(self, data: str):
+        raise NotImplementedError

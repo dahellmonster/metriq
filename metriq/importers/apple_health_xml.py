@@ -3,9 +3,12 @@ from .base import BaseImporter
 
 class AppleHealthImporter(BaseImporter):
 
-    def parse(self, xml):
+    def detect(self, data: str) -> bool:
+        return "HKQuantityTypeIdentifierDietaryEnergyConsumed" in data
 
-        root = ET.fromstring(xml)
+    def parse(self, data: str):
+
+        root = ET.fromstring(data)
 
         calories = 0
         protein = 0
@@ -15,7 +18,7 @@ class AppleHealthImporter(BaseImporter):
         for record in root.findall("Record"):
 
             type_name = record.attrib.get("type")
-            value = float(record.attrib.get("value", 0))
+            value = float(record.attrib.get("value",0))
 
             if type_name == "HKQuantityTypeIdentifierDietaryEnergyConsumed":
                 calories += value
