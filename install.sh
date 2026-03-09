@@ -7,7 +7,7 @@ apt install -y python3 python3-venv python3-pip git
 cd /opt
 
 if [ ! -d metriq ]; then
-  git clone https://github.com/YOURUSER/metriq.git
+  git clone https://github.com/dahellmonster/metriq.git
 fi
 
 cd metriq

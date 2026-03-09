@@ -12,5 +12,5 @@ sleep 10
 pct exec $CTID -- bash -c "
 apt update
 apt install -y curl
-curl -sSL https://raw.githubusercontent.com/YOURUSER/metriq/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/dahellmonster/metriq/main/install.sh | bash
 "
