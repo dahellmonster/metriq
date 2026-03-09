@@ -23,24 +23,29 @@ async def upload_page(request: Request):
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
 
-    contents = await file.read()
-    text = contents.decode()
+    path = f"/tmp/{file.filename}"
 
-    importer = detect_importer(text)
-    parsed = importer.parse(text)
+    with open(path, "wb") as f:
+        f.write(await file.read())
+
+    importer = detect_importer(path)
+    data = importer.parse(path)
 
     session = Session()
 
-    entry = NutritionLog(
-        date=date.today(),
-        calories=parsed.get("calories",0),
-        protein=parsed.get("protein",0),
-        carbs=parsed.get("carbs",0),
-        fat=parsed.get("fat",0),
-        source="auto"
-    )
+    for day, values in data.items():
 
-    session.merge(entry)
+        entry = NutritionLog(
+            date=day,
+            calories=values["calories"],
+            protein=values["protein"],
+            carbs=values["carbs"],
+            fat=values["fat"],
+            source="apple_health"
+        )
+
+        session.merge(entry)
+
     session.commit()
 
-    return {"status":"imported","calories":parsed.get("calories",0)}
+    return {"status": "imported", "days": len(data)}
