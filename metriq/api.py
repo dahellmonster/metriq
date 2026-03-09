@@ -6,6 +6,7 @@ from datetime import date
 from metriq.importer_registry import detect_importer
 from metriq.database import Session
 from metriq.models import NutritionLog
+app = FastAPI()
 
 templates = Jinja2Templates(directory="metriq/templates")
 
