@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Float, Integer, String, Date
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import Column, Integer, String, Float, Date, DateTime
+from datetime import datetime
+from .database import Base
 
 Base = declarative_base()
 
@@ -37,3 +38,20 @@ class MetricsLog(Base):
     value = Column(Float)
     unit = Column(String)
     source = Column(String)
+    
+
+
+
+class HealthRecord(Base):
+
+    __tablename__ = "health_records"
+
+    id = Column(Integer, primary_key=True)
+
+    type = Column(String)
+
+    value = Column(String)
+
+    start_date = Column(DateTime)
+
+    end_date = Column(DateTime)

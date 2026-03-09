@@ -1,15 +1,25 @@
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from datetime import datetime
-from .base import BaseImporter
+
+from metriq.database import Session
+from metriq.models import HealthRecord
 
 
-class AppleHealthImporter(BaseImporter):
-
-    def detect(self, data: str) -> bool:
-        return "HKQuantityTypeIdentifierDietaryEnergyConsumed" in data
+class AppleHealthImporter:
 
     def parse(self, file_path):
+
+        session = Session()
+
+        wanted_metrics = {
+            "HKQuantityTypeIdentifierDietaryEnergyConsumed": "calories",
+            "HKQuantityTypeIdentifierDietaryProtein": "protein",
+            "HKQuantityTypeIdentifierDietaryCarbohydrates": "carbs",
+            "HKQuantityTypeIdentifierDietaryFatTotal": "fat",
+            "HKQuantityTypeIdentifierStepCount": "steps",
+            "HKQuantityTypeIdentifierBodyMass": "weight",
+        }
 
         daily = defaultdict(lambda: {
             "calories": 0,
@@ -20,41 +30,59 @@ class AppleHealthImporter(BaseImporter):
             "weight": None
         })
 
-        for event, elem in ET.iterparse(file_path):
+        for event, elem in ET.iterparse(file_path, events=("end",)):
 
             if elem.tag != "Record":
+                elem.clear()
                 continue
 
             type_name = elem.attrib.get("type")
             value_raw = elem.attrib.get("value")
 
+            start_date_raw = elem.attrib.get("startDate")
+            end_date_raw = elem.attrib.get("endDate")
+
             try:
-                value = float(value_raw)
-            except (TypeError, ValueError):
+                start_date = datetime.strptime(start_date_raw[:19], "%Y-%m-%d %H:%M:%S")
+            except:
                 elem.clear()
                 continue
-            date = elem.attrib.get("startDate")
 
-            date = datetime.fromisoformat(date).date()
+            try:
+                end_date = datetime.strptime(end_date_raw[:19], "%Y-%m-%d %H:%M:%S") if end_date_raw else None
+            except:
+                end_date = None
 
-            if type_name == "HKQuantityTypeIdentifierDietaryEnergyConsumed":
-                daily[date]["calories"] += value
+            # store raw record
+            record = HealthRecord(
+                type=type_name,
+                value=value_raw,
+                start_date=start_date,
+                end_date=end_date
+            )
 
-            elif type_name == "HKQuantityTypeIdentifierDietaryProtein":
-                daily[date]["protein"] += value
+            session.add(record)
 
-            elif type_name == "HKQuantityTypeIdentifierDietaryCarbohydrates":
-                daily[date]["carbs"] += value
+            # process numeric metrics
+            if type_name in wanted_metrics:
 
-            elif type_name == "HKQuantityTypeIdentifierDietaryFatTotal":
-                daily[date]["fat"] += value
+                try:
+                    value = float(value_raw)
+                except:
+                    elem.clear()
+                    continue
 
-            elif type_name == "HKQuantityTypeIdentifierStepCount":
-                daily[date]["steps"] += value
+                date = start_date.date()
 
-            elif type_name == "HKQuantityTypeIdentifierBodyMass":
-                daily[date]["weight"] = value
+                metric = wanted_metrics[type_name]
+
+                if metric == "weight":
+                    daily[date][metric] = value
+                else:
+                    daily[date][metric] += value
 
             elem.clear()
+
+        session.commit()
 
         return daily
