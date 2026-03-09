@@ -20,7 +20,7 @@ echo "Configuring container..."
 
 CTID=210
 HOSTNAME="metriq"
-TEMPLATE="debian-12-standard_12.2-1_amd64.tar.zst"
+TEMPLATE=$(pveam available | grep debian-12-standard | awk '{print $2}' | tail -n1)
 STORAGE="local-lvm"
 
 echo "Updating template list..."
