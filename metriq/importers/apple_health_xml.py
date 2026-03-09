@@ -68,11 +68,14 @@ class AppleHealthImporter:
             batch.append(record)
             count += 1
 
+            # batch insert raw records
             if len(batch) >= BATCH_SIZE:
-                session.bulk_save_objects(batch)
+                for r in batch:
+                    session.merge(r)
                 session.commit()
                 batch.clear()
 
+            # aggregate metrics for analytics
             if type_name in wanted_metrics:
 
                 try:
@@ -91,8 +94,10 @@ class AppleHealthImporter:
 
             elem.clear()
 
+        # insert remaining records
         if batch:
-            session.bulk_save_objects(batch)
+            for r in batch:
+                session.merge(r)
             session.commit()
 
         print(f"Imported {count} raw health records")

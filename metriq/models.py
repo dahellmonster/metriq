@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Date, DateTime
+from sqlalchemy import Column, Integer, String, Float, Date, DateTime, UniqueConstraint
 from datetime import datetime
 
 from metriq.database import Base
@@ -43,15 +43,22 @@ class MetricsLog(Base):
 
 
 class HealthRecord(Base):
-
     __tablename__ = "health_records"
 
     id = Column(Integer, primary_key=True)
 
-    type = Column(String)
-
+    type = Column(String, index=True)
     value = Column(String)
 
-    start_date = Column(DateTime)
-
+    start_date = Column(DateTime, index=True)
     end_date = Column(DateTime)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "type",
+            "start_date",
+            "end_date",
+            "value",
+            name="unique_health_record"
+        ),
+    )
