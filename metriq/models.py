@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, Float, Date, DateTime
 from datetime import datetime
-from .database import Base
 
-Base = declarative_base()
+from metriq.database import Base
+
 
 class NutritionLog(Base):
     __tablename__ = "nutrition_log"
