@@ -9,21 +9,24 @@ async def summary():
 
     session = Session()
 
-    row = session.query(NutritionLog)\
+    nutrition = session.query(NutritionLog)\
         .order_by(NutritionLog.date.desc())\
         .first()
 
-    if not row:
+    if not nutrition:
         return {"status": "no data"}
 
+    weight = session.query(BiometricsLog)\
+        .order_by(BiometricsLog.date.desc())\
+        .first()
+
     return {
-        "date": str(row.date),
-        "calories": row.calories,
-        "protein": row.protein,
-        "carbs": row.carbs,
-        "fat": row.fat,
-        "steps": row.steps,
-        "weight": row.weight
+        "date": str(nutrition.date),
+        "calories": nutrition.calories,
+        "protein": nutrition.protein,
+        "carbs": nutrition.carbs,
+        "fat": nutrition.fat,
+        "weight": weight.weight if weight else None
     }
 
 
@@ -40,14 +43,18 @@ async def analytics():
     data = []
 
     for r in rows:
+
+        weight = session.query(BiometricsLog)\
+            .filter(BiometricsLog.date == r.date)\
+            .first()
+
         data.append({
             "date": str(r.date),
             "calories": r.calories,
             "protein": r.protein,
             "carbs": r.carbs,
             "fat": r.fat,
-            "steps": r.steps,
-            "weight": r.weight
+            "weight": weight.weight if weight else None
         })
 
     return {"days": len(data), "data": data}
@@ -57,19 +64,21 @@ async def tdee():
 
     session = Session()
 
-    rows = session.query(NutritionLog)\
+    nutrition_rows = session.query(NutritionLog)\
         .order_by(NutritionLog.date.desc())\
         .limit(30)\
         .all()
 
-    if len(rows) < 14:
+    weight_rows = session.query(BiometricsLog)\
+        .order_by(BiometricsLog.date.desc())\
+        .limit(30)\
+        .all()
+
+    if len(nutrition_rows) < 14 or len(weight_rows) < 2:
         return {"error": "not enough data"}
 
-    calories = [r.calories for r in rows if r.calories]
-    weights = [r.weight for r in rows if r.weight]
-
-    if len(weights) < 2:
-        return {"error": "not enough weight data"}
+    calories = [r.calories for r in nutrition_rows if r.calories]
+    weights = [r.weight for r in weight_rows if r.weight]
 
     avg_intake = sum(calories) / len(calories)
 
@@ -77,7 +86,7 @@ async def tdee():
 
     kcal_change = weight_change * 7700
 
-    tdee = avg_intake - (kcal_change / len(rows))
+    tdee = avg_intake - (kcal_change / len(nutrition_rows))
 
     return {
         "average_intake": round(avg_intake, 1),
