@@ -25,14 +25,20 @@ async def upload_file(file: UploadFile = File(...)):
 
     path = f"/tmp/{file.filename}"
 
-    data = await file.read()
-
     with open(path, "wb") as f:
-        f.write(data)
+        f.write(await file.read())
 
-    text_sample = data[:10000].decode(errors="ignore")
+    # Detect importer based on file type
+    if file.filename.endswith(".xml"):
+        from metriq.importers.apple_health_xml import AppleHealthImporter
+        importer = AppleHealthImporter()
 
-    importer = detect_importer(text_sample)
+    elif file.filename.endswith(".csv"):
+        from metriq.importers.mfp_csv import MfpCsvImporter
+        importer = MfpCsvImporter()
+
+    else:
+        raise Exception("Unsupported file type")
 
     parsed = importer.parse(path)
 
@@ -46,7 +52,7 @@ async def upload_file(file: UploadFile = File(...)):
             protein=values["protein"],
             carbs=values["carbs"],
             fat=values["fat"],
-            source="apple_health"
+            source="import"
         )
 
         session.merge(entry)
