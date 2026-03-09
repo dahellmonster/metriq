@@ -14,6 +14,29 @@ templates = Jinja2Templates(directory="metriq/templates")
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+    
+@app.get("/analytics")
+async def analytics():
+
+    session = Session()
+
+    rows = session.query(NutritionLog).order_by(NutritionLog.date.desc()).limit(30).all()
+
+    data = []
+
+    for r in rows:
+        data.append({
+            "date": r.date,
+            "calories": r.calories,
+            "protein": r.protein,
+            "carbs": r.carbs,
+            "fat": r.fat
+        })
+
+    return {
+        "days": len(data),
+        "data": data
+    }
 
 @app.get("/upload", response_class=HTMLResponse)
 async def upload_page(request: Request):
