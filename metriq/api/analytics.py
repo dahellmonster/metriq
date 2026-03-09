@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from metriq.database import Session
-from metriq.models import NutritionLog
+from metriq.models import NutritionLog, BiometricsLog
 
 router = APIRouter()
 
