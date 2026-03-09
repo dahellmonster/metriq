@@ -1,0 +1,11 @@
+[Unit]
+Description=Metriq Health Analytics Service
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/metriq
+ExecStart=/opt/metriq/venv/bin/python main.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
