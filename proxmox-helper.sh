@@ -1,35 +1,47 @@
 #!/usr/bin/env bash
+set -e
 
 clear
 
-echo "======================================="
-echo "        Metriq Installer"
+echo "======================================"
+echo "         Metriq Installer"
 echo "   Personal Health Analytics Engine"
-echo "======================================="
+echo "======================================"
 echo ""
-
-read -p "Create Metriq LXC container now? (y/n): " choice
-
-if [[ "$choice" != "y" ]]; then
-  echo "Installation cancelled."
-  exit
-fi
-
-echo ""
-echo "Configuring container..."
-
-CTID=210
-HOSTNAME="metriq"
-TEMPLATE=$(pveam available | grep debian-12-standard | awk '{print $2}' | tail -n1)
-STORAGE="local-lvm"
 
 echo "Updating template list..."
-pveam update
+pveam update >/dev/null
+
+echo "Finding latest Debian 12 template..."
+
+TEMPLATE=$(pveam available | grep debian-12-standard | awk '{print $2}' | tail -n1)
+
+if [ -z "$TEMPLATE" ]; then
+    echo "Could not find a Debian 12 template."
+    exit 1
+fi
+
+echo "Latest template: $TEMPLATE"
+
+echo ""
+echo "Checking if template is already downloaded..."
 
 if ! pveam list local | grep -q "$TEMPLATE"; then
-  echo "Downloading Debian 12 template..."
-  pveam download local $TEMPLATE
+    echo "Downloading template..."
+    pveam download local $TEMPLATE
+else
+    echo "Template already exists."
 fi
+
+echo ""
+echo "Finding next available CTID..."
+
+CTID=$(pvesh get /cluster/nextid)
+
+echo "Using CTID: $CTID"
+
+HOSTNAME="metriq"
+STORAGE="local-lvm"
 
 echo ""
 echo "Creating Metriq container..."
@@ -47,7 +59,6 @@ echo "Starting container..."
 
 pct start $CTID
 
-echo ""
 echo "Waiting for networking..."
 sleep 15
 
@@ -56,19 +67,22 @@ echo "Installing Metriq..."
 
 pct exec $CTID -- bash -c "
 apt update
-apt install -y curl
+apt install -y curl git
 curl -sSL https://raw.githubusercontent.com/dahellmonster/metriq/main/install.sh | bash
 "
 
 echo ""
-echo "======================================="
-echo " Metriq Installed Successfully"
-echo "======================================="
+echo "======================================"
+echo "       Metriq Installation Complete"
+echo "======================================"
 echo ""
 
-echo "Check container IP with:"
-echo "pct exec $CTID -- ip a"
+IP=$(pct exec $CTID -- hostname -I | awk '{print $1}')
 
+echo "Container ID : $CTID"
+echo "Container IP : $IP"
 echo ""
-echo "Then open:"
-echo "http://CONTAINER_IP:8000/analytics"
+
+echo "Open Metriq API at:"
+echo "http://$IP:8000/analytics"
+echo ""
