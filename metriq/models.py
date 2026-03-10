@@ -62,3 +62,13 @@ class HealthRecord(Base):
             name="unique_health_record"
         ),
     )
+
+class SleepLog(Base):
+
+    __tablename__ = "sleep_log"
+
+    date = Column(Date, primary_key=True)
+
+    duration_hours = Column(Float)
+
+    source = Column(String)
