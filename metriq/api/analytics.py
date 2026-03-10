@@ -209,3 +209,41 @@ async def sleep():
         "records": len(data),
         "data": data
     }
+@router.get("/sleep_summary")
+async def sleep_summary():
+
+    session = Session()
+
+    rows = session.query(HealthRecord)\
+        .filter(HealthRecord.type == "HKCategoryTypeIdentifierSleepAnalysis")\
+        .order_by(HealthRecord.start_date.desc())\
+        .limit(60)\
+        .all()
+
+    durations = []
+
+    for r in rows:
+
+        if r.start_date and r.end_date:
+
+            hours = (r.end_date - r.start_date).total_seconds() / 3600
+
+            durations.append(hours)
+
+    if not durations:
+        return {"status": "no sleep data"}
+
+    avg_sleep = sum(durations) / len(durations)
+
+    return {
+
+        "records_analyzed": len(durations),
+
+        "average_sleep_hours": round(avg_sleep,2),
+
+        "latest_sleep_hours": round(durations[0],2),
+
+        "max_sleep": round(max(durations),2),
+
+        "min_sleep": round(min(durations),2)
+    }
