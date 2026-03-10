@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from metriq.database import Session
 from metriq.models import NutritionLog, BiometricsLog
+from metriq.models import HealthRecord
 
 router = APIRouter()
 
@@ -177,4 +178,34 @@ async def dashboard():
         },
 
         "tdee_estimate": round(tdee, 1) if tdee else None
+    }
+@router.get("/sleep")
+async def sleep():
+
+    session = Session()
+
+    rows = session.query(HealthRecord)\
+        .filter(HealthRecord.type == "HKCategoryTypeIdentifierSleepAnalysis")\
+        .order_by(HealthRecord.start_date.desc())\
+        .limit(30)\
+        .all()
+
+    data = []
+
+    for r in rows:
+
+        duration = None
+
+        if r.end_date and r.start_date:
+            duration = (r.end_date - r.start_date).total_seconds() / 3600
+
+        data.append({
+            "start": str(r.start_date),
+            "end": str(r.end_date),
+            "duration_hours": round(duration,2) if duration else None
+        })
+
+    return {
+        "records": len(data),
+        "data": data
     }
