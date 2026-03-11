@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from metriq.api.health_sync import router as health_sync_router
 
 from datetime import date
 from metriq.importer_registry import detect_importer
@@ -8,6 +9,7 @@ from metriq.database import Session
 from metriq.models import NutritionLog
 
 app = FastAPI()
+app.include_router(health_sync_router)
 
 templates = Jinja2Templates(directory="metriq/templates")
 

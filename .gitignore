@@ -57,3 +57,4 @@ htmlcov/
 
 # Local config overrides
 config.yaml
+.env
