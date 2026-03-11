@@ -1,0 +1,32 @@
+<html>
+<head>
+<title>Metriq Profile</title>
+</head>
+
+<body>
+
+<h1>Metriq Profile</h1>
+
+<h2>API Key</h2>
+
+<p id="apikey">{{ api_key }}</p>
+
+<button onclick="regen()">Generate New API Key</button>
+
+<script>
+
+async function regen() {
+
+    const res = await fetch("/profile/regenerate", {
+        method: "POST"
+    })
+
+    const data = await res.json()
+
+    document.getElementById("apikey").innerText = data.new_key
+}
+
+</script>
+
+</body>
+</html>
