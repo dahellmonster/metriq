@@ -8,17 +8,33 @@ from fastapi.templating import Jinja2Templates
 
 from datetime import date
 
+# --------------------------------------------------
+# Database
+# --------------------------------------------------
+
 from metriq.database import Session, engine
+
+# IMPORTANT:
+# Import models BEFORE create_all so SQLAlchemy
+# registers all tables.
+from metriq import models
 from metriq.models import Base, NutritionLog
+
+# --------------------------------------------------
+# Import utilities
+# --------------------------------------------------
 
 from metriq.importer_registry import detect_importer
 
+# --------------------------------------------------
 # Routers
+# --------------------------------------------------
+
 from metriq.api.health_sync import router as health_sync_router
 from metriq.api.profile import router as profile_router
 
 # --------------------------------------------------
-# Application
+# FastAPI Application
 # --------------------------------------------------
 
 app = FastAPI()
@@ -30,7 +46,7 @@ app = FastAPI()
 @app.on_event("startup")
 def startup():
 
-    # Ensure all database tables exist
+    # Ensure models are registered and tables created
     Base.metadata.create_all(bind=engine)
 
 # --------------------------------------------------
@@ -181,13 +197,11 @@ async def upload_file(file: UploadFile = File(...)):
     if file.filename.endswith(".xml"):
 
         from metriq.importers.apple_health_xml import AppleHealthImporter
-
         importer = AppleHealthImporter()
 
     elif file.filename.endswith(".csv"):
 
         from metriq.importers.mfp_csv import MfpCsvImporter
-
         importer = MfpCsvImporter()
 
     else:
