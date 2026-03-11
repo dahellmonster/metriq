@@ -1,24 +1,64 @@
+# --------------------------------------------------
+# Metriq Main API
+# --------------------------------------------------
+
 from fastapi import FastAPI, UploadFile, File, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+
+from datetime import date
+
+from metriq.database import Session, engine
+from metriq.models import Base, NutritionLog
+
+from metriq.importer_registry import detect_importer
+
+# Routers
 from metriq.api.health_sync import router as health_sync_router
 from metriq.api.profile import router as profile_router
 
-from datetime import date
-from metriq.importer_registry import detect_importer
-from metriq.database import Session
-from metriq.models import NutritionLog
+# --------------------------------------------------
+# Application
+# --------------------------------------------------
 
 app = FastAPI()
+
+# --------------------------------------------------
+# Database initialization
+# --------------------------------------------------
+
+@app.on_event("startup")
+def startup():
+
+    # Ensure all database tables exist
+    Base.metadata.create_all(bind=engine)
+
+# --------------------------------------------------
+# Router registration
+# --------------------------------------------------
+
 app.include_router(health_sync_router)
 app.include_router(profile_router)
 
+# --------------------------------------------------
+# Template engine
+# --------------------------------------------------
+
 templates = Jinja2Templates(directory="metriq/templates")
+
+# --------------------------------------------------
+# Health check
+# --------------------------------------------------
 
 @app.get("/health")
 async def health():
+
     return {"status": "ok"}
-    
+
+# --------------------------------------------------
+# Analytics endpoint
+# --------------------------------------------------
+
 @app.get("/analytics")
 async def analytics():
 
@@ -45,10 +85,22 @@ async def analytics():
 
     return {"days": len(data), "data": data}
 
+# --------------------------------------------------
+# Upload page
+# --------------------------------------------------
+
 @app.get("/upload", response_class=HTMLResponse)
 async def upload_page(request: Request):
-    return templates.TemplateResponse("upload.html", {"request": request})
-    
+
+    return templates.TemplateResponse(
+        "upload.html",
+        {"request": request}
+    )
+
+# --------------------------------------------------
+# TDEE calculation
+# --------------------------------------------------
+
 @app.get("/tdee")
 async def tdee():
 
@@ -60,12 +112,14 @@ async def tdee():
         .all()
 
     if len(rows) < 14:
+
         return {"error": "not enough data"}
 
     calories = [r.calories for r in rows if r.calories]
     weights = [r.weight for r in rows if r.weight]
 
     if len(weights) < 2:
+
         return {"error": "not enough weight data"}
 
     avg_intake = sum(calories) / len(calories)
@@ -82,6 +136,10 @@ async def tdee():
         "weight_change": round(weight_change, 2)
     }
 
+# --------------------------------------------------
+# Daily summary
+# --------------------------------------------------
+
 @app.get("/summary")
 async def summary():
 
@@ -92,6 +150,7 @@ async def summary():
         .first()
 
     if not row:
+
         return {"status": "no data"}
 
     return {
@@ -103,25 +162,36 @@ async def summary():
         "steps": row.steps,
         "weight": row.weight
     }
-    
+
+# --------------------------------------------------
+# File ingestion
+# --------------------------------------------------
+
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
 
     path = f"/tmp/{file.filename}"
 
     with open(path, "wb") as f:
+
         f.write(await file.read())
 
     # Detect importer based on file type
+
     if file.filename.endswith(".xml"):
+
         from metriq.importers.apple_health_xml import AppleHealthImporter
+
         importer = AppleHealthImporter()
 
     elif file.filename.endswith(".csv"):
+
         from metriq.importers.mfp_csv import MfpCsvImporter
+
         importer = MfpCsvImporter()
 
     else:
+
         raise Exception("Unsupported file type")
 
     parsed = importer.parse(path)
