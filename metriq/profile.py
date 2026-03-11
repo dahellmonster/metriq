@@ -15,7 +15,9 @@ router = APIRouter()
 # Template configuration
 # --------------------------------------------------
 
-templates = Jinja2Templates(directory="metriq/templates")
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 # Location of environment file
 ENV_PATH = "/opt/metriq/.env"
