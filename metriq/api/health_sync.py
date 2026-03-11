@@ -1,3 +1,7 @@
+# --------------------------------------------------
+# Health Data Ingestion API
+# --------------------------------------------------
+
 from fastapi import APIRouter, HTTPException, Request
 from datetime import datetime
 import os
@@ -7,19 +11,20 @@ from metriq.models import HealthRecord
 
 router = APIRouter()
 
+# --------------------------------------------------
+# API Key
+# --------------------------------------------------
 
 def get_api_key():
-    """
-    Read API key from environment dynamically so changes
-    to .env (via profile page) take effect immediately.
-    """
     return os.getenv("METRIQ_API_KEY")
 
 
+# --------------------------------------------------
+# Helper: parse timestamps safely
+# --------------------------------------------------
+
 def parse_datetime(value):
-    """
-    Safely parse ISO timestamps.
-    """
+
     if not value:
         return None
 
@@ -29,46 +34,43 @@ def parse_datetime(value):
         return None
 
 
+# --------------------------------------------------
+# Health data ingestion endpoint
+# --------------------------------------------------
+
 @router.post("/health_sync")
 async def health_sync(request: Request):
 
-    # -------- AUTHENTICATION --------
-
-    api_key = get_api_key()
-
-    if not api_key:
-        raise HTTPException(
-            status_code=500,
-            detail="API key not configured"
-        )
+    # --------------------------------------------------
+    # Authenticate request
+    # --------------------------------------------------
 
     header_key = request.headers.get("X-METRIQ-API-KEY")
 
-    if header_key != api_key:
+    if header_key != get_api_key():
+
         raise HTTPException(
             status_code=401,
             detail="Unauthorized"
         )
 
-    # -------- PAYLOAD --------
+    # --------------------------------------------------
+    # Parse JSON payload
+    # --------------------------------------------------
 
-    try:
-        payload = await request.json()
-    except Exception:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid JSON payload"
-        )
+    payload = await request.json()
 
-    # Accept single object or list
     if not isinstance(payload, list):
+
         payload = [payload]
 
     session = Session()
 
-    inserted = 0
+    records = []
 
-    # -------- PROCESS RECORDS --------
+    # --------------------------------------------------
+    # Build record objects
+    # --------------------------------------------------
 
     for item in payload:
 
@@ -80,11 +82,12 @@ async def health_sync(request: Request):
         start_date = parse_datetime(item.get("start_date"))
         end_date = parse_datetime(item.get("end_date"))
 
-        # Basic validation
         if not metric or value is None or not start_date:
+
             continue
 
         record = HealthRecord(
+
             type=metric,
             value=str(value),
             unit=unit,
@@ -93,13 +96,19 @@ async def health_sync(request: Request):
             end_date=end_date
         )
 
-        session.add(record)
+        records.append(record)
 
-        inserted += 1
+    # --------------------------------------------------
+    # Bulk insert (fast ingestion)
+    # --------------------------------------------------
+
+    session.bulk_save_objects(records)
 
     session.commit()
 
     return {
+
         "status": "ok",
-        "records_inserted": inserted
+        "records_inserted": len(records)
+
     }
