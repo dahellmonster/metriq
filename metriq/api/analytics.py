@@ -54,6 +54,8 @@ async def analytics():
         .limit(90)\
         .all()
 
+    rows.reverse()
+
     data = []
 
     for r in rows:
@@ -88,13 +90,15 @@ async def dashboard():
     session = Session()
 
     # ---------------------------------------------
-    # Nutrition data
+    # Nutrition data (latest 90 days)
     # ---------------------------------------------
 
     nutrition = session.query(NutritionLog)\
         .order_by(NutritionLog.date.desc())\
         .limit(90)\
         .all()
+
+    nutrition.reverse()
 
     dates = []
     calories = []
@@ -116,6 +120,8 @@ async def dashboard():
         .order_by(SleepLog.date.desc())\
         .limit(90)\
         .all()
+
+    sleep_rows.reverse()
 
     sleep_map = {}
 
