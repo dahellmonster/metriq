@@ -17,25 +17,29 @@ MI_BASE_URL = "https://api-mifit.huami.com"
 
 
 # --------------------------------------------------
-# Login
+# Login to Mi Fitness cloud
 # --------------------------------------------------
 
 def login(username, password):
 
     url = f"{MI_BASE_URL}/v1/client/login"
 
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+
     payload = {
         "username": username,
         "password": password
     }
 
-    r = requests.post(url, json=payload)
+    r = requests.post(url, headers=headers, data=payload)
 
     r.raise_for_status()
 
     data = r.json()
 
-    return data["token"]
+    return data.get("token")
 
 
 # --------------------------------------------------
