@@ -26,6 +26,7 @@ from metriq.api.upload import router as upload_router
 from metriq.api.analytics import router as analytics_router
 from metriq.api.health_sync import router as health_sync_router
 from metriq.api.profile import router as profile_router
+from metriq.api.dashboard import router as dashboard_router
 
 # --------------------------------------------------
 # FastAPI Application
@@ -52,6 +53,7 @@ app.include_router(upload_router)
 app.include_router(analytics_router)
 app.include_router(health_sync_router)
 app.include_router(profile_router)
+app.include_router(dashboard_router)
 
 # --------------------------------------------------
 # Uvicorn entrypoint
