@@ -137,7 +137,7 @@ def steps_per_day(session):
 
 
 # --------------------------------------------------
-# Helper: sleep hours
+# Helper: sleep hours per day
 # --------------------------------------------------
 
 def sleep_per_day(session):
@@ -149,7 +149,13 @@ def sleep_per_day(session):
             func.julianday(HealthRecord.start_date)
         ) * 24
     ).filter(
-        HealthRecord.type == "HKCategoryTypeIdentifierSleepAnalysis"
+        HealthRecord.type == "HKCategoryTypeIdentifierSleepAnalysis",
+        HealthRecord.value.in_([
+            "HKCategoryValueSleepAnalysisAsleep",
+            "HKCategoryValueSleepAnalysisAsleepCore",
+            "HKCategoryValueSleepAnalysisAsleepDeep",
+            "HKCategoryValueSleepAnalysisAsleepREM"
+        ])
     ).group_by(
         func.date(HealthRecord.start_date)
     ).all()
