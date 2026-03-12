@@ -95,7 +95,7 @@ async def tdee():
         "weight_change": round(weight_change, 2)
     }
     
-@router.get("/dashboard")
+@router.get("/api/dashboard")
 async def dashboard():
 
     session = Session()

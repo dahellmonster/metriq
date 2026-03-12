@@ -21,7 +21,7 @@
 
 async function loadData() {
 
-    const response = await fetch("/analytics")
+    const response = await fetch("/api/dashboard")
     const json = await response.json()
 
     const dates = json.data.map(d => d.date)
