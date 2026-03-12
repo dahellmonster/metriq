@@ -92,7 +92,7 @@ async def dashboard():
     # ---------------------------------------------
 
     nutrition = session.query(NutritionLog)\
-        .order_by(NutritionLog.date.asc())\
+        .order_by(NutritionLog.date.desc())\
         .limit(90)\
         .all()
 
@@ -113,7 +113,7 @@ async def dashboard():
     # ---------------------------------------------
 
     sleep_rows = session.query(SleepLog)\
-        .order_by(SleepLog.date.asc())\
+        .order_by(SleepLog.date.desc())\
         .limit(90)\
         .all()
 
