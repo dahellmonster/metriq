@@ -1,9 +1,36 @@
+<!DOCTYPE html>
 <html>
 
 <head>
+
 <title>Metriq Dashboard</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 40px;
+}
+
+h1 {
+    margin-bottom: 40px;
+}
+
+.chart-container {
+    width: 90%;
+    max-width: 900px;
+    margin-bottom: 60px;
+}
+
+canvas {
+    background: #fafafa;
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+
+</style>
 
 </head>
 
@@ -11,27 +38,49 @@
 
 <h1>Metriq Dashboard</h1>
 
+<div class="chart-container">
 <h2>Calories</h2>
 <canvas id="caloriesChart"></canvas>
+</div>
 
+<div class="chart-container">
 <h2>Weight</h2>
 <canvas id="weightChart"></canvas>
+</div>
+
+<div class="chart-container">
+<h2>Steps</h2>
+<canvas id="stepsChart"></canvas>
+</div>
+
+<div class="chart-container">
+<h2>Sleep</h2>
+<canvas id="sleepChart"></canvas>
+</div>
+
+<div class="chart-container">
+<h2>Energy Balance</h2>
+<canvas id="energyChart"></canvas>
+</div>
 
 <script>
 
 async function loadData() {
 
     const response = await fetch("/api/dashboard")
-    const json = await response.json()
+    const data = await response.json()
 
-    console.log("dashboard data:", json)
+    console.log("Dashboard data:", data)
 
-    const rows = json.data || json.rows || []
+    const dates = data.dates || []
 
-    const dates = rows.map(d => d.date)
-    const calories = rows.map(d => d.calories)
-    const weight = rows.map(d => d.weight)
+    const calories = data.calories || []
+    const weight = data.weight || []
+    const steps = data.steps || []
+    const sleep = data.sleep || []
+    const energy = data.energy_balance || []
 
+    // Calories chart
     new Chart(
         document.getElementById("caloriesChart"),
         {
@@ -40,12 +89,15 @@ async function loadData() {
                 labels: dates,
                 datasets: [{
                     label: "Calories",
-                    data: calories
+                    data: calories,
+                    borderWidth: 2,
+                    fill: false
                 }]
             }
         }
     )
 
+    // Weight chart
     new Chart(
         document.getElementById("weightChart"),
         {
@@ -54,7 +106,56 @@ async function loadData() {
                 labels: dates,
                 datasets: [{
                     label: "Weight",
-                    data: weight
+                    data: weight,
+                    borderWidth: 2,
+                    fill: false
+                }]
+            }
+        }
+    )
+
+    // Steps chart
+    new Chart(
+        document.getElementById("stepsChart"),
+        {
+            type: "bar",
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: "Steps",
+                    data: steps
+                }]
+            }
+        }
+    )
+
+    // Sleep chart
+    new Chart(
+        document.getElementById("sleepChart"),
+        {
+            type: "bar",
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: "Sleep Hours",
+                    data: sleep
+                }]
+            }
+        }
+    )
+
+    // Energy balance chart
+    new Chart(
+        document.getElementById("energyChart"),
+        {
+            type: "line",
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: "Energy Balance",
+                    data: energy,
+                    borderWidth: 2,
+                    fill: false
                 }]
             }
         }
