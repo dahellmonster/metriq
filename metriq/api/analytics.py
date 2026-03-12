@@ -142,6 +142,7 @@ def steps_per_day(session):
 
 def sleep_per_day(session):
 
+    # First attempt: actual sleep stages
     rows = session.query(
         func.date(HealthRecord.start_date),
         func.sum(
@@ -150,15 +151,26 @@ def sleep_per_day(session):
         ) * 24
     ).filter(
         HealthRecord.type == "HKCategoryTypeIdentifierSleepAnalysis",
-        HealthRecord.value.in_([
-            "HKCategoryValueSleepAnalysisAsleep",
-            "HKCategoryValueSleepAnalysisAsleepCore",
-            "HKCategoryValueSleepAnalysisAsleepDeep",
-            "HKCategoryValueSleepAnalysisAsleepREM"
-        ])
+        HealthRecord.value.like("%Asleep%")
     ).group_by(
         func.date(HealthRecord.start_date)
     ).all()
+
+    # If nothing found, fallback to InBed
+    if not rows:
+
+        rows = session.query(
+            func.date(HealthRecord.start_date),
+            func.sum(
+                func.julianday(HealthRecord.end_date) -
+                func.julianday(HealthRecord.start_date)
+            ) * 24
+        ).filter(
+            HealthRecord.type == "HKCategoryTypeIdentifierSleepAnalysis",
+            HealthRecord.value == "HKCategoryValueSleepAnalysisInBed"
+        ).group_by(
+            func.date(HealthRecord.start_date)
+        ).all()
 
     data = {}
 

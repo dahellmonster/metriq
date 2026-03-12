@@ -7,3 +7,4 @@ pyyaml
 MyFitnessPal
 jinja2
 python-multipart
+requests
