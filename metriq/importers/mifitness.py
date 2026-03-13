@@ -15,12 +15,13 @@ BASE_URL = "https://de.hlth.io.mi.com/app/v1"
 
 def get_headers():
 
-    token = os.getenv("MI_TOKEN")
-    userid = os.getenv("MI_USERID")
-
     return {
-        "apptoken": token,
-        "userid": userid,
+        "apptoken": os.getenv("MI_TOKEN"),
+        "userid": os.getenv("MI_USERID"),
+        "appplatform": "ios",
+        "appversion": "3.27.0",
+        "country": "DE",
+        "timezone": "Europe/Berlin",
         "Content-Type": "application/json"
     }
 
