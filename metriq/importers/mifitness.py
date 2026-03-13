@@ -1,7 +1,8 @@
 # --------------------------------------------------
-# Mi Fitness Cloud Importer
+# Mi Fitness Importer
 # --------------------------------------------------
 
+import os
 import requests
 from datetime import datetime
 
@@ -9,97 +10,64 @@ from metriq.database import Session
 from metriq.models import HealthRecord
 
 
-# --------------------------------------------------
-# Configuration
-# --------------------------------------------------
-
-MI_BASE_URL = "https://api-mifit.huami.com"
+BASE_URL = "https://de.hlth.io.mi.com/app/v1"
 
 
-# --------------------------------------------------
-# Login to Mi Fitness cloud
-# --------------------------------------------------
+def get_headers():
 
-def login(username, password):
+    token = os.getenv("MI_TOKEN")
+    userid = os.getenv("MI_USERID")
 
-    url = f"{MI_BASE_URL}/v1/client/login"
-
-    headers = {
-        "Content-Type": "application/x-www-form-urlencoded"
+    return {
+        "apptoken": token,
+        "userid": userid,
+        "Content-Type": "application/json"
     }
+
+
+def fetch_sport_records(watermark=""):
+
+    url = f"{BASE_URL}/data/get_sport_records_by_watermark"
 
     payload = {
-        "username": username,
-        "password": password
+        "watermark": watermark
     }
 
-    r = requests.post(url, headers=headers, data=payload)
-
-    r.raise_for_status()
-
-    data = r.json()
-
-    return data.get("token")
-
-
-# --------------------------------------------------
-# Fetch sleep data
-# --------------------------------------------------
-
-def fetch_sleep(token):
-
-    url = f"{MI_BASE_URL}/v1/sleep"
-
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
-
-    r = requests.get(url, headers=headers)
+    r = requests.post(url, json=payload, headers=get_headers())
 
     r.raise_for_status()
 
     return r.json()
 
 
-# --------------------------------------------------
-# Normalize sleep records
-# --------------------------------------------------
-
-def normalize_sleep(records):
+def normalize_sport(records):
 
     normalized = []
 
     for r in records:
 
-        date = datetime.fromtimestamp(r["start"])
+        ts = datetime.fromtimestamp(r["start_time"])
 
         normalized.append({
-            "metric": "sleep_deep",
-            "value": r["deep"],
-            "unit": "minutes",
-            "timestamp": date
+            "type": "steps",
+            "value": str(r.get("steps", 0)),
+            "timestamp": ts
         })
 
         normalized.append({
-            "metric": "sleep_rem",
-            "value": r["rem"],
-            "unit": "minutes",
-            "timestamp": date
+            "type": "distance",
+            "value": str(r.get("distance", 0)),
+            "timestamp": ts
         })
 
         normalized.append({
-            "metric": "sleep_light",
-            "value": r["light"],
-            "unit": "minutes",
-            "timestamp": date
+            "type": "calories",
+            "value": str(r.get("calories", 0)),
+            "timestamp": ts
         })
 
     return normalized
 
-
-# --------------------------------------------------
-# Save to database
-# --------------------------------------------------
 
 def save_records(records):
 
@@ -108,10 +76,8 @@ def save_records(records):
     for r in records:
 
         rec = HealthRecord(
-            type=r["metric"],
-            value=str(r["value"]),
-            unit=r["unit"],
-            source="mifitness",
+            type=r["type"],
+            value=r["value"],
             start_date=r["timestamp"],
             end_date=r["timestamp"]
         )
@@ -121,18 +87,14 @@ def save_records(records):
     session.commit()
 
 
-# --------------------------------------------------
-# Main sync function
-# --------------------------------------------------
+def sync():
 
-def sync(username, password):
+    data = fetch_sport_records()
 
-    token = login(username, password)
+    records = data["data"]["records"]
 
-    sleep_data = fetch_sleep(token)
+    normalized = normalize_sport(records)
 
-    records = normalize_sleep(sleep_data)
+    save_records(normalized)
 
-    save_records(records)
-
-    return len(records)
+    return len(normalized)
