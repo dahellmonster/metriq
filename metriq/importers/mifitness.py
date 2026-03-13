@@ -8,6 +8,7 @@ from datetime import datetime
 
 from metriq.database import Session
 from metriq.models import HealthRecord
+from metriq.importers.xiaomi_auth import login
 
 
 BASE_URL = "https://de.hlth.io.mi.com/app/v1"
