@@ -13,15 +13,17 @@ from metriq.models import HealthRecord
 BASE_URL = "https://de.hlth.io.mi.com/app/v1"
 
 
+
 def get_headers():
 
+    creds = login(
+        os.getenv("MI_USERNAME"),
+        os.getenv("MI_PASSWORD")
+    )
+
     return {
-        "apptoken": os.getenv("MI_TOKEN"),
-        "userid": os.getenv("MI_USERID"),
-        "appplatform": "ios",
-        "appversion": "3.27.0",
-        "country": "DE",
-        "timezone": "Europe/Berlin",
+        "Cookie": f"serviceToken={creds['serviceToken']}",
+        "userid": creds["userid"],
         "Content-Type": "application/json"
     }
 
