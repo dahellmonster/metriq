@@ -17,17 +17,13 @@ BASE_URL = "https://de.hlth.io.mi.com/app/v1"
 
 def get_headers():
 
-    creds = login(
-        os.getenv("MI_USERNAME"),
-        os.getenv("MI_PASSWORD")
-    )
+    token = get_token()
 
     return {
-        "Cookie": f"serviceToken={creds['serviceToken']}",
-        "userid": creds["userid"],
+        "apptoken": token["apptoken"],
+        "userid": token["userid"],
         "Content-Type": "application/json"
     }
-
 
 def fetch_sport_records(watermark=""):
 
