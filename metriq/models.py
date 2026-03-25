@@ -1,128 +1,50 @@
-from sqlalchemy import Column, Integer, String, Float, Date, DateTime
-from sqlalchemy.orm import declarative_base
-
-Base = declarative_base()
+from sqlalchemy import Column, Integer, Float, String, DateTime, Date, UniqueConstraint
+from metriq.db import Base
 
 
-# --------------------------------------------------
-# Nutrition (food intake)
-# --------------------------------------------------
-
-class NutritionLog(Base):
-
-    __tablename__ = "nutrition_log"
-
-    date = Column(Date, primary_key=True)
-
-    calories = Column(Float)
-
-    protein = Column(Float)
-
-    carbs = Column(Float)
-
-    fat = Column(Float)
-
-    steps = Column(Float)
-
-    weight = Column(Float)
-
-    source = Column(String)
-
-
-# --------------------------------------------------
-# Activity tracking
-# --------------------------------------------------
-
-class ActivityLog(Base):
-
-    __tablename__ = "activity_log"
+class HealthSample(Base):
+    __tablename__ = "health_samples"
 
     id = Column(Integer, primary_key=True)
 
-    date = Column(Date)
+    timestamp = Column(DateTime, index=True, nullable=False)
+    date = Column(Date, index=True, nullable=False)
 
-    activity_type = Column(String)
+    metric = Column(String, index=True, nullable=False)
+    value = Column(Float, nullable=False)
 
-    category = Column(String)
+    source = Column(String, default="apple_health")
 
-    calories = Column(Float)
-
-    duration = Column(Float)
-
-    source = Column(String)
-
-
-# --------------------------------------------------
-# Body metrics
-# --------------------------------------------------
-
-class BiometricsLog(Base):
-
-    __tablename__ = "biometrics_log"
-
-    date = Column(Date, primary_key=True)
-
-    weight = Column(Float)
-
-    bodyfat = Column(Float)
-
-    source = Column(String)
+    __table_args__ = (
+        UniqueConstraint("timestamp", "metric", name="uq_sample"),
+    )
 
 
-# --------------------------------------------------
-# Generic daily metrics
-# --------------------------------------------------
-
-class MetricsLog(Base):
-
-    __tablename__ = "metrics_log"
+class DailyMetrics(Base):
+    __tablename__ = "daily_metrics"
 
     id = Column(Integer, primary_key=True)
 
-    date = Column(Date)
+    date = Column(Date, unique=True, index=True)
 
-    metric = Column(String)
+    # activity
+    steps = Column(Integer, default=0)
+    distance = Column(Float, default=0)
+    flights_climbed = Column(Integer, default=0)
 
-    value = Column(Float)
+    # energy
+    active_energy = Column(Float, default=0)
+    basal_energy = Column(Float, default=0)
 
-    unit = Column(String)
+    # heart
+    avg_heart_rate = Column(Float, nullable=True)
 
-    source = Column(String)
+    # sleep (placeholder for now)
+    sleep_hours = Column(Float, default=0)
+    sleep_score = Column(Float, nullable=True)
 
-
-# --------------------------------------------------
-# Raw health records ingestion
-# --------------------------------------------------
-
-class HealthRecord(Base):
-
-    __tablename__ = "health_records"
-
-    id = Column(Integer, primary_key=True)
-
-    type = Column(String, index=True)
-
-    value = Column(String)
-
-    unit = Column(String)
-
-    source = Column(String)
-
-    start_date = Column(DateTime, index=True)
-
-    end_date = Column(DateTime)
-
-
-# --------------------------------------------------
-# Sleep aggregation
-# --------------------------------------------------
-
-class SleepLog(Base):
-
-    __tablename__ = "sleep_log"
-
-    date = Column(Date, primary_key=True)
-
-    hours = Column(Float)
-
-    source = Column(String)
+    # nutrition
+    calories_in = Column(Float, default=0)
+    protein = Column(Float, default=0)
+    carbs = Column(Float, default=0)
+    fat = Column(Float, default=0)
