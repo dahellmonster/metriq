@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from sqlalchemy.orm import Session
 
-from metriq.db import SessionLocal
+from metriq.database import SessionLocal
 from metriq.models import HealthSample
 from metriq.services.metrics import rebuild_daily_metrics
 

@@ -1,4 +1,4 @@
-from metriq.db import engine, Base
+from metriq.database import engine, Base
 import metriq.models
 
 print("Creating DB...")
