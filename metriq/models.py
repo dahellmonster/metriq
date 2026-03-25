@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, Float, String, DateTime, Date, UniqueConstraint
-from metriq.db import Base
+from metriq.database import Base
 
 
 class HealthSample(Base):
